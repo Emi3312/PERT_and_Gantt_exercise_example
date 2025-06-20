@@ -319,7 +319,8 @@
         }
         .progress-indicator {
             position: fixed;
-            bottom: 3vh; 
+            /* MODIFICADO: Ajustar bottom para dejar espacio al footer */
+            bottom: calc(3vh + 40px); /* Asumiendo que el footer tiene 40px de altura */
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -338,10 +339,10 @@
             transform: scale(1.1); 
         }
 
-        /* --- NUEVOS ESTILOS PARA EL BOTÓN DE NAVEGACIÓN --- */
         .navigation-controls {
             position: fixed;
-            bottom: 2.5vh; /* Ajustado ligeramente para mejor alineación vertical con dots */
+            /* MODIFICADO: Ajustar bottom para dejar espacio al footer */
+            bottom: calc(2.5vh + 40px); /* Asumiendo que el footer tiene 40px de altura */
             right: 3vw;
             z-index: 100;
             display: flex;
@@ -351,16 +352,16 @@
             background-color: #3498db;
             color: #ecf0f1;
             border: none;
-            padding: 10px 20px; /* Un poco más compacto */
+            padding: 10px 20px; 
             font-size: clamp(0.9rem, 1.7vh, 1.05rem);
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-            display: flex; /* Para alinear ícono y texto si se agrega un ícono */
+            display: flex; 
             align-items: center;
-            gap: 5px; /* Espacio entre texto e ícono si se usa */
+            gap: 5px; 
         }
 
         .nav-button:hover {
@@ -374,7 +375,32 @@
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        /* --- FIN DE NUEVOS ESTILOS --- */
+        
+        /* --- NUEVOS ESTILOS PARA EL FOOTER --- */
+        .site-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px; /* Altura fija para el footer */
+            background-color: rgba(15, 20, 25, 0.97); /* Ligeramente más oscuro y opaco */
+            color: #a2b0bd; /* Color de texto para el footer */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(0.7rem, 1.3vh, 0.8rem);
+            z-index: 50; /* Por debajo de los controles de navegación si es necesario, pero el espaciado debe evitar solapamiento */
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 -1px 4px rgba(0,0,0,0.15);
+            padding: 0 15px; /* Padding horizontal para que el texto no toque los bordes */
+        }
+
+        .site-footer p {
+            margin: 0;
+            line-height: 1.4; /* Espaciado entre líneas si el texto se ajusta */
+            text-align: center; /* Asegurar que el texto esté centrado si se ajusta */
+        }
+        /* --- FIN DE NUEVOS ESTILOS PARA EL FOOTER --- */
 
     </style>
 </head>
@@ -479,14 +505,18 @@
             </div>
         </div>
     </div>
+
     <div class="progress-indicator" id="progress-indicator"></div>
 
-    <!-- --- NUEVO BOTÓN DE NAVEGACIÓN --- -->
     <div class="navigation-controls">
         <button id="next-step-button" class="nav-button">Siguiente <span style="font-size: 1.2em; line-height: 0;">→</span></button>
     </div>
-    <!-- --- FIN DE NUEVO BOTÓN DE NAVEGACIÓN --- -->
 
+    <!-- --- NUEVO FOOTER --- -->
+    <footer class="site-footer">
+        <p>Example exercise developed and programmed by Porfirio Emiliano Osorio Rios</p>
+    </footer>
+    <!-- --- FIN DE NUEVO FOOTER --- -->
 
     <script>
         const birthdayPartyProject = {
@@ -602,7 +632,7 @@
                 if (task.dependencies.length > 0) {
                     level = Math.max(...task.dependencies.map(depId => {
                         const depTask = localTasks.find(t => t.id === depId);
-                        return (depTask && depTask.level !== undefined) ? depTask.level : -1; // Handle missing dep for robustness
+                        return (depTask && depTask.level !== undefined) ? depTask.level : -1; 
                     })) + 1;
                 }
                 task.level = level;
@@ -1121,12 +1151,10 @@
                 }
             });
 
-            // --- AGREGAR EVENT LISTENER AL NUEVO BOTÓN ---
             const nextButton = document.getElementById('next-step-button');
             if (nextButton) {
                 nextButton.addEventListener('click', navigateNext);
             }
-            // --- FIN DE AGREGAR EVENT LISTENER ---
         });
     </script>
 </body>
