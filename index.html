@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Birthday Party Planning (PERT/GANTT) - Full Screen</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; 
+        }
+
+        body {
+            background: linear-gradient(135deg, #2c3e50, #3498db, #2980b9);
+            color: #ecf0f1;
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+        }
+
+        #birthday-party-container {
+            background: rgba(30, 40, 50, 0.9); 
+            width: 100vw; 
+            height: 100vh; 
+            max-width: none;
+            border-radius: 0; 
+            box-shadow: none; 
+            padding: 2vh 3vw; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
+        }
+
+        .bp-step {
+            display: none; 
+            flex-direction: column;
+            height: 100%; 
+            width: 100%;
+            animation: fadeInStep 0.8s ease-out forwards;
+            overflow-y: auto; 
+            padding: 1vw; 
+        }
+        
+        .bp-step > .bp-step-title,
+        .bp-step > .bp-step-explanation {
+            flex-shrink: 0; 
+            margin-left: auto; 
+            margin-right: auto;
+            max-width: 900px; 
+        }
+        .bp-step > .bp-graph-container {
+            flex-grow: 1; 
+            min-height: 0; 
+            width: 100%;
+            max-width: 1400px; 
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+
+        @keyframes fadeInStep {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .bp-step.exiting {
+            animation: fadeOutStep 0.5s ease-in forwards;
+            position: absolute; 
+            top: 0; left: 0; 
+            width: inherit; 
+            height: inherit;
+        }
+
+        @keyframes fadeOutStep {
+            from { opacity: 1; transform: scale(1) translateY(0); }
+            to { opacity: 0; transform: scale(1.05) translateY(-10px); }
+        }
+
+        .bp-step-title {
+            font-size: clamp(2rem, 3.5vw, 2.8rem); 
+            margin-bottom: 2vh; 
+            color: #3498db; 
+            text-align: center;
+            text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+            width: 100%; 
+            white-space: normal; 
+            border-right: none;
+            overflow: visible;
+        }
+
+        .bp-step-title.is-animating {
+            overflow: hidden; 
+            white-space: nowrap; 
+            width: 0; 
+            border-right: .15em solid #3498db; 
+            animation: typing 2s steps(45, end) forwards, 
+                       blink-caret .75s step-end 8; 
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; } 
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #3498db; }
+        }
+
+        .bp-step-explanation {
+            font-size: clamp(1.1rem, 2vh, 1.3rem); 
+            line-height: 1.7;
+            margin-bottom: 2.5vh; 
+            text-align: center;
+            color: #bdc3c7;
+        }
+        .bp-step-explanation strong {
+            color: #f1c40f; 
+        }
+
+        .bp-graph-container {
+            background: rgba(0, 0, 0, 0.25); 
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+        }
+
+        .node {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, r 0.3s ease, fill 0.3s ease;
+            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5)); 
+        }
+        .node circle {
+            stroke-width: 3.5; 
+            stroke: rgba(255,255,255,0.8);
+        }
+        .node.initial-hidden {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        .node.visible {
+            opacity: 1;
+            transform: scale(1); 
+        }
+        
+        .node.floating {
+            animation-name: subtleNodeFloat;
+            animation-duration: 8s; 
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+            animation-delay: calc(var(--animation-index, 0) * 300ms); 
+        }
+
+        @keyframes subtleNodeFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(1.5px, -2.5px) scale(1.015); } 
+            50% { transform: translate(-1.5px, 1.5px) scale(1); }
+            75% { transform: translate(0px, 2.5px) scale(1.015); }
+        }
+
+        .node-fill-blue { fill: #3498db; }
+        .node-fill-green { fill: #2ecc71; }
+        .node-fill-red { fill: #e74c3c; }
+        .node-fill-purple { fill: #9b59b6; }
+        .node-fill-orange { fill: #f39c12; }
+
+        .node:hover circle {
+            stroke: #f1c40f;
+            r: calc(var(--node-radius) + 4px); 
+        }
+        
+        .critical-node circle { 
+            fill: #e74c3c !important; 
+            stroke: #f1c40f;
+            animation: pulseCriticalNode 1.5s infinite ease-in-out;
+        }
+        @keyframes pulseCriticalNode {
+            0% { r: var(--node-radius); }
+            50% { r: calc(var(--node-radius) + 5px); } 
+            100% { r: var(--node-radius); }
+        }
+
+        .slack-node circle {
+            fill: #2ecc71 !important; 
+            stroke: #1abc9c;
+        }
+        .slack-node.floating { 
+            animation-name: subtleNodeFloat; 
+        }
+
+        .edge {
+            stroke: #95a5a6; 
+            stroke-width: 3; 
+            fill: none;
+            marker-end: url(#arrowhead-default); 
+            transition: stroke-dashoffset 1s ease-out, opacity 0.5s ease;
+            stroke-dasharray: 1000; 
+            stroke-dashoffset: 1000; 
+        }
+        .edge.visible {
+            stroke-dashoffset: 0; 
+        }
+        .edge.initial-hidden {
+            opacity: 0;
+        }
+
+        .critical-edge {
+            stroke: #e74c3c !important; 
+            stroke-width: 4.5; 
+            animation: flowCriticalEdge 2s linear infinite;
+            marker-end: url(#arrowhead-critical) !important; 
+        }
+        @keyframes flowCriticalEdge {
+            to { stroke-dashoffset: -20; } 
+        }
+        
+        #arrowhead-default polygon { fill: #95a5a6; }
+        #arrowhead-critical polygon { fill: #e74c3c !important; }
+
+        .node-text { 
+            fill: white;
+            font-size: clamp(14px, 1.8vh, 18px); 
+            text-anchor: middle;
+            pointer-events: none;
+            font-weight: 700; 
+            opacity: 0;
+            transition: opacity 0.5s ease 0.5s; 
+        }
+        .node-text.visible { opacity: 1; }
+
+        .name-text { 
+             font-size: clamp(10px, 1.3vh, 12px); 
+             font-weight: 500; 
+             fill: #bdc3c7;
+             text-anchor: middle; 
+        }
+        .duration-text, .times-text, .slack-value-text { 
+            fill: #ecf0f1;
+            font-size: clamp(10px, 1.3vh, 12px); 
+            text-anchor: middle;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease 0.7s; 
+        }
+        .duration-text.visible, .name-text.visible, .times-text.visible, .slack-value-text.visible { opacity: 1; }
+        
+        .duration-text { fill: #f1c40f; font-weight: bold; }
+        .times-text { fill: #3498db; }
+        .slack-value-text { fill: #2ecc71; font-weight: bold;}
+
+        .gantt-bar {
+            rx: 6; 
+            ry: 6;
+            transition: width 1s ease-out, fill 0.3s ease;
+            filter: drop-shadow(3px 3px 5px rgba(0,0,0,0.35)); 
+        }
+        .gantt-bar-blue { fill: #3498db; }
+        .gantt-bar-red { fill: #e74c3c; }
+        .gantt-bar:hover {
+            fill: #5dade2; 
+        }
+        .critical-gantt-bar:hover {
+            fill: #ec7063; 
+        }
+
+        .gantt-label {
+            fill: #ecf0f1;
+            font-size: clamp(11px, 1.5vh, 14px); 
+            text-anchor: end;
+            opacity: 0;
+            transition: opacity 0.5s ease 0.2s;
+        }
+        .gantt-label.visible { opacity: 1; }
+
+        .gantt-duration-label, .gantt-slack-label {
+            fill: white;
+            font-size: clamp(10px, 1.2vh, 12px); 
+            text-anchor: middle;
+            dominant-baseline: middle;
+            opacity: 0;
+            transition: opacity 0.5s ease 1s; 
+            pointer-events: none; 
+        }
+        .gantt-duration-label.visible, .gantt-slack-label.visible { opacity: 1; }
+
+        .gantt-slack-bar {
+            fill: #2ecc71;
+            opacity: 0; 
+            rx:3; ry:3;
+            transition: width 0.8s ease-out 0.5s, opacity 0.5s ease-out 0.5s; 
+        }
+        .gantt-slack-bar.visible { opacity: 0.7; }
+
+        .gantt-axis-line, .gantt-tick {
+            stroke: #7f8c8d;
+            stroke-width: 1.5; 
+        }
+        .gantt-axis-text {
+            fill: #bdc3c7;
+            font-size: clamp(10px, 1.2vh, 13px); 
+            text-anchor: middle;
+        }
+         .gantt-title-text {
+            fill: #f1c40f;
+            font-size: clamp(16px, 2.2vh, 22px); 
+            font-weight: 600;
+            text-anchor: middle;
+        }
+        .progress-indicator {
+            position: fixed;
+            bottom: 3vh; 
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px; 
+            z-index: 100;
+        }
+        .progress-dot {
+            width: 14px; 
+            height: 14px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .progress-dot.active {
+            background-color: #f1c40f;
+            transform: scale(1.1); 
+        }
+
+        /* --- NUEVOS ESTILOS PARA EL BOTÓN DE NAVEGACIÓN --- */
+        .navigation-controls {
+            position: fixed;
+            bottom: 2.5vh; /* Ajustado ligeramente para mejor alineación vertical con dots */
+            right: 3vw;
+            z-index: 100;
+            display: flex;
+        }
+
+        .nav-button {
+            background-color: #3498db;
+            color: #ecf0f1;
+            border: none;
+            padding: 10px 20px; /* Un poco más compacto */
+            font-size: clamp(0.9rem, 1.7vh, 1.05rem);
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            display: flex; /* Para alinear ícono y texto si se agrega un ícono */
+            align-items: center;
+            gap: 5px; /* Espacio entre texto e ícono si se usa */
+        }
+
+        .nav-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .nav-button:active {
+            background-color: #2471a3;
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        /* --- FIN DE NUEVOS ESTILOS --- */
+
+    </style>
+</head>
+<body>
+    <div id="birthday-party-container">
+        <!-- Step 1: Party Introduction -->
+        <div class="bp-step" id="bp-step1">
+            <h2 class="bp-step-title" data-text="Let's Plan the Perfect Party!"></h2>
+            <p class="bp-step-explanation">
+                We're going to visualize how a birthday party is planned using PERT and GANTT charts.
+                We'll see the tasks, their dependencies, and how to identify the critical path to ensure everything is on time.
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-intro-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Step 2: The Party Tasks -->
+        <div class="bp-step" id="bp-step2">
+            <h2 class="bp-step-title" data-text="Defining the Tasks"></h2>
+            <p class="bp-step-explanation">
+                Every great party starts with a to-do list. These are our <strong>main tasks</strong>.
+                Each circle represents a task, identified by a letter and its name.
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-tasks-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Step 3: Who Depends on Whom? (Dependencies) -->
+        <div class="bp-step" id="bp-step3">
+            <h2 class="bp-step-title" data-text="Connecting the Tasks"></h2>
+            <p class="bp-step-explanation">
+                Some tasks can't start until others are finished. These are the <strong>dependencies</strong>,
+                shown as arrows. For example, we can't <strong>Send Invitations (C)</strong> without first <strong>Creating the Guest List (B)</strong>.
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-dependencies-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Step 4: How Long Does Each Thing Take? (Durations) -->
+        <div class="bp-step" id="bp-step4">
+            <h2 class="bp-step-title" data-text="Estimating Durations"></h2>
+            <p class="bp-step-explanation">
+                Each task needs an estimated time. The <strong>duration</strong> (in days) is shown below each task.
+                <strong>Prepare Food (G)</strong> takes the longest: 3 days!
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-duration-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Step 5: Calculating Times (ES, EF, LS, LF) -->
+        <div class="bp-step" id="bp-step5">
+            <h2 class="bp-step-title" data-text="Calculating Key Times"></h2>
+            <p class="bp-step-explanation">
+                We calculate the earliest and latest times for each task:
+                <strong>ES</strong> (Early Start), <strong>EF</strong> (Early Finish),
+                <strong>LS</strong> (Late Start), <strong>LF</strong> (Late Finish). These help us understand flexibility.
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-pert-times-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Step 6: The Party's Critical Path -->
+        <div class="bp-step" id="bp-step6">
+            <h2 class="bp-step-title" data-text="The Critical Path"></h2>
+            <p class="bp-step-explanation">
+                The <strong>Critical Path</strong> (in red) is the sequence of tasks that determines the total planning duration.
+                Any delay in these tasks delays the party! For example, <strong>Define Budget (A)</strong> is critical.
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-critical-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Step 7: Spare Time (Slack) -->
+        <div class="bp-step" id="bp-step7">
+            <h2 class="bp-step-title" data-text="Tasks with Slack"></h2>
+            <p class="bp-step-explanation">
+                Tasks not on the critical path have <strong>slack</strong> (in green).
+                This is the time they can be delayed without affecting the final date.
+                <strong>Buy Decorations (D)</strong> has 2 days of slack. Room to breathe!
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-slack-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Step 8: The Party Schedule (GANTT) -->
+        <div class="bp-step" id="bp-step8">
+            <h2 class="bp-step-title" data-text="GANTT Chart"></h2>
+            <p class="bp-step-explanation">
+                The <strong>GANTT Chart</strong> visually displays the schedule.
+                Bars represent task durations on a timeline.
+                The critical path is highlighted, and slack bars (light green) show flexibility.
+            </p>
+            <div class="bp-graph-container">
+                <svg id="bp-gantt-svg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+    </div>
+    <div class="progress-indicator" id="progress-indicator"></div>
+
+    <!-- --- NUEVO BOTÓN DE NAVEGACIÓN --- -->
+    <div class="navigation-controls">
+        <button id="next-step-button" class="nav-button">Siguiente <span style="font-size: 1.2em; line-height: 0;">→</span></button>
+    </div>
+    <!-- --- FIN DE NUEVO BOTÓN DE NAVEGACIÓN --- -->
+
+
+    <script>
+        const birthdayPartyProject = {
+            tasks: [
+                { id: "A", name: "Define Budget", duration: 1, dependencies: [] },
+                { id: "B", name: "Create Guest List", duration: 1, dependencies: [] },
+                { id: "C", name: "Send Invitations", duration: 1, dependencies: ["B"] },
+                { id: "D", name: "Buy Decorations", duration: 2, dependencies: ["A"] },
+                { id: "E", name: "Buy Food", duration: 1, dependencies: ["A"] },
+                { id: "F", name: "Decorate Venue", duration: 1, dependencies: ["D"] },
+                { id: "G", name: "Prepare Food", duration: 3, dependencies: ["E"] },
+                { id: "H", name: "Host Party", duration: 1, dependencies: ["C", "F", "G"] }
+            ],
+            criticalPathIds: [] 
+        };
+
+        function calculateTimes(tasksToCalc) {
+            let tasks = JSON.parse(JSON.stringify(tasksToCalc));
+            tasks.forEach(task => {
+                if (task.dependencies.length === 0) {
+                    task.ES = 0;
+                } else {
+                    task.ES = Math.max(...task.dependencies.map(depId => {
+                        const depTask = tasks.find(t => t.id === depId);
+                        return depTask.EF;
+                    }));
+                }
+                task.EF = task.ES + task.duration;
+            });
+
+            const projectDuration = Math.max(...tasks.map(task => task.EF));
+
+            tasks.slice().reverse().forEach(task => {
+                const successors = tasks.filter(t => t.dependencies.includes(task.id));
+                if (successors.length === 0) {
+                    task.LF = projectDuration;
+                } else {
+                    task.LF = Math.min(...successors.map(succ => succ.LS));
+                }
+                task.LS = task.LF - task.duration;
+                task.slack = task.LS - task.ES;
+            });
+            return { tasks, projectDuration };
+        }
+
+        const { tasks: partyTasks, projectDuration: partyProjectDuration } = calculateTimes(birthdayPartyProject.tasks);
+        birthdayPartyProject.criticalPathIds = partyTasks.filter(t => t.slack === 0).map(t => t.id);
+
+        const graphConfig = {
+            nodeRadius: 30,      
+            nodeSpacing: 300,    
+            rowSpacing: 190,     
+            ganttBarHeight: 28, 
+            ganttSpacing: 45, 
+            pertTextOffsetY: 18, 
+            pertTextLineHeight: 14,
+            animationDelayIncrement: 150 
+        };
+        document.documentElement.style.setProperty('--node-radius', graphConfig.nodeRadius + 'px');
+
+        function createArrowMarker(svg, id = "arrowhead-default", color = "#7f8c8d") {
+            let defs = svg.querySelector("defs");
+            if (!defs) {
+                defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+                svg.appendChild(defs);
+            }
+            if (defs.querySelector(`#${id}`)) return; 
+            
+            const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+            marker.setAttribute("id", id);
+            marker.setAttribute("markerWidth", "12"); 
+            marker.setAttribute("markerHeight", "9");
+            marker.setAttribute("refX", "11.5"); 
+            marker.setAttribute("refY", "4.5");
+            marker.setAttribute("orient", "auto-start-reverse"); 
+            
+            const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            polygon.setAttribute("points", "0 0, 12 4.5, 0 9"); 
+            polygon.setAttribute("fill", color);
+            marker.appendChild(polygon);
+            defs.appendChild(marker);
+        }
+
+        function drawPERT(svgId, options = {}) {
+            const { 
+                showDependencies = false, 
+                showDurations = false, 
+                showTimes = false, 
+                showCritical = false, 
+                showSlack = false 
+            } = options;
+
+            const svg = document.getElementById(svgId);
+            if (!svg) { console.error("SVG element not found:", svgId); return; }
+            svg.innerHTML = '';
+            createArrowMarker(svg, "arrowhead-default", "#95a5a6");
+            if (showCritical || showDependencies) { 
+                 createArrowMarker(svg, "arrowhead-critical", "#e74c3c");
+            }
+            
+            const svgWidth = svg.clientWidth;
+            const svgHeight = svg.clientHeight;
+            if (svgWidth <= 0 || svgHeight <= 0) return;
+
+            const localTasks = JSON.parse(JSON.stringify(partyTasks));
+            let animationDelay = 0;
+            let nodeAnimationIndex = 0; 
+
+            const levels = {};
+            let maxLevel = 0;
+            localTasks.forEach(task => {
+                let level = 0;
+                if (task.dependencies.length > 0) {
+                    level = Math.max(...task.dependencies.map(depId => {
+                        const depTask = localTasks.find(t => t.id === depId);
+                        return (depTask && depTask.level !== undefined) ? depTask.level : -1; // Handle missing dep for robustness
+                    })) + 1;
+                }
+                task.level = level;
+                if (level > maxLevel) maxLevel = level;
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(task);
+            });
+            
+            const numLevels = maxLevel + 1;
+            let dynamicNodeSpacing = graphConfig.nodeSpacing;
+            if (numLevels > 4) {
+                 dynamicNodeSpacing = Math.max(150, graphConfig.nodeSpacing - (numLevels - 4) * 25);
+            }
+            const totalGraphWidth = (numLevels - 1) * dynamicNodeSpacing + 2 * graphConfig.nodeRadius;
+            const offsetX = Math.max(graphConfig.nodeRadius + 20, (svgWidth - totalGraphWidth) / 2);
+
+            Object.keys(levels).forEach(level => {
+                const tasksInLevel = levels[level];
+                const numTasksInLevel = tasksInLevel.length;
+                
+                let dynamicRowSpacing = graphConfig.rowSpacing;
+                if (numTasksInLevel > 2 && svgHeight < 600) { 
+                     dynamicRowSpacing = Math.max(120, graphConfig.rowSpacing - (numTasksInLevel - 2) * 20);
+                } else if (numTasksInLevel > 3) {
+                     dynamicRowSpacing = Math.max(140, graphConfig.rowSpacing - (numTasksInLevel - 3) * 15);
+                }
+
+                const totalHeightForLevel = (numTasksInLevel - 1) * dynamicRowSpacing;
+                let yStart = (svgHeight - totalHeightForLevel) / 2;
+                yStart = Math.max(yStart, graphConfig.nodeRadius + 70); 
+                
+                tasksInLevel.forEach((task, index) => {
+                    task.x = offsetX + parseInt(level) * dynamicNodeSpacing;
+                    task.y = yStart + index * dynamicRowSpacing;
+                    task.y = Math.min(task.y, svgHeight - (graphConfig.nodeRadius + 70)); 
+                });
+            });
+            
+            localTasks.forEach(task => {
+                task.dependencies.forEach(depId => {
+                    const depTask = localTasks.find(t => t.id === depId);
+                    if (!depTask || task.x === undefined || depTask.x === undefined || task.y === undefined || depTask.y === undefined) return;
+
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    const dx = task.x - depTask.x;
+                    const dy = task.y - depTask.y;
+                    const angle = Math.atan2(dy, dx);
+                    
+                    line.setAttribute("x1", depTask.x + graphConfig.nodeRadius * Math.cos(angle));
+                    line.setAttribute("y1", depTask.y + graphConfig.nodeRadius * Math.sin(angle));
+                    line.setAttribute("x2", task.x - graphConfig.nodeRadius * Math.cos(angle));
+                    line.setAttribute("y2", task.y - graphConfig.nodeRadius * Math.sin(angle));
+                    
+                    const isCriticalEdge = showCritical && birthdayPartyProject.criticalPathIds.includes(depId) && birthdayPartyProject.criticalPathIds.includes(task.id);
+                    line.setAttribute("class", isCriticalEdge ? "edge critical-edge" : "edge");
+                    if (!showDependencies) line.classList.add("initial-hidden");
+                    else {
+                        line.style.transitionDelay = `${animationDelay}ms`;
+                        setTimeout(() => line.classList.add("visible"), 50 + animationDelay); 
+                        animationDelay += graphConfig.animationDelayIncrement / 3; 
+                    }
+                    line.setAttribute("marker-end", isCriticalEdge ? "url(#arrowhead-critical)" : "url(#arrowhead-default)");
+                    svg.appendChild(line);
+                });
+            });
+            
+            animationDelay = 0; 
+            const nodeColors = ["node-fill-blue", "node-fill-green", "node-fill-purple", "node-fill-orange"];
+            let colorIndex = 0;
+
+            localTasks.forEach(task => {
+                if (task.x === undefined || task.y === undefined) return;
+
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "node initial-hidden");
+                g.style.transformOrigin = `${task.x}px ${task.y}px`; 
+                g.style.transitionDelay = `${animationDelay}ms`;
+                g.style.setProperty('--animation-index', nodeAnimationIndex++); 
+
+                svg.appendChild(g);
+                
+                const isCritical = birthdayPartyProject.criticalPathIds.includes(task.id);
+                const hasSlack = task.slack > 0;
+
+                setTimeout(() => {
+                    g.classList.add("visible");
+                    if (!isCritical) {
+                        setTimeout(() => {
+                            g.classList.add('floating');
+                        }, 500); 
+                    }
+                }, 50 + animationDelay);
+
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", task.x);
+                circle.setAttribute("cy", task.y);
+                circle.setAttribute("r", graphConfig.nodeRadius);
+                
+                if (showCritical && isCritical) g.classList.add("critical-node");
+                else if (showSlack && hasSlack) g.classList.add("slack-node");
+                
+                if (!((showCritical && isCritical) || (showSlack && hasSlack))) {
+                     circle.classList.add(nodeColors[colorIndex % nodeColors.length]);
+                     colorIndex++;
+                }
+
+                g.appendChild(circle);
+                
+                const idText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                idText.setAttribute("x", task.x);
+                idText.setAttribute("y", task.y);
+                idText.setAttribute("dy", "0.35em");
+                idText.setAttribute("class", "node-text");
+                idText.textContent = task.id;
+                idText.style.transitionDelay = `${animationDelay + 200}ms`; 
+                g.appendChild(idText);
+                setTimeout(() => idText.classList.add("visible"), 50 + animationDelay + 200);
+                
+                const nameTextElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                nameTextElement.setAttribute("x", task.x);
+                nameTextElement.setAttribute("y", task.y - graphConfig.nodeRadius - 10); 
+                nameTextElement.setAttribute("class", "name-text");
+                nameTextElement.textContent = task.name;
+                nameTextElement.style.transitionDelay = `${animationDelay + 250}ms`;
+                g.appendChild(nameTextElement);
+                setTimeout(() => nameTextElement.classList.add("visible"), 50 + animationDelay + 250);
+
+                let currentTextY = task.y + graphConfig.nodeRadius + graphConfig.pertTextOffsetY + 5; 
+
+                if (showDurations) {
+                    const durationTextElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    durationTextElement.setAttribute("x", task.x);
+                    durationTextElement.setAttribute("y", currentTextY);
+                    durationTextElement.setAttribute("class", "duration-text");
+                    durationTextElement.textContent = `Dur: ${task.duration}d`;
+                    durationTextElement.style.transitionDelay = `${animationDelay + 300}ms`;
+                    g.appendChild(durationTextElement);
+                    setTimeout(() => durationTextElement.classList.add("visible"), 50 + animationDelay + 300);
+                    currentTextY += graphConfig.pertTextLineHeight;
+                }
+                
+                if (showTimes) {
+                    const esEfText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    esEfText.setAttribute("x", task.x);
+                    esEfText.setAttribute("y", currentTextY);
+                    esEfText.setAttribute("class", "times-text");
+                    esEfText.textContent = `ES:${task.ES} EF:${task.EF}`;
+                    esEfText.style.transitionDelay = `${animationDelay + 350}ms`;
+                    g.appendChild(esEfText);
+                    setTimeout(() => esEfText.classList.add("visible"), 50 + animationDelay + 350);
+                    currentTextY += graphConfig.pertTextLineHeight;
+
+                    const lsLfText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    lsLfText.setAttribute("x", task.x);
+                    lsLfText.setAttribute("y", currentTextY);
+                    lsLfText.setAttribute("class", "times-text");
+                    lsLfText.textContent = `LS:${task.LS} LF:${task.LF}`;
+                    lsLfText.style.transitionDelay = `${animationDelay + 400}ms`;
+                    g.appendChild(lsLfText);
+                    setTimeout(() => lsLfText.classList.add("visible"), 50 + animationDelay + 400);
+                    currentTextY += graphConfig.pertTextLineHeight;
+                }
+                
+                if (showSlack && hasSlack && !isCritical) {
+                    const slackText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    slackText.setAttribute("x", task.x);
+                    slackText.setAttribute("y", currentTextY);
+                    slackText.setAttribute("class", "slack-value-text");
+                    slackText.textContent = `Slack: ${task.slack}d`;
+                    slackText.style.transitionDelay = `${animationDelay + 450}ms`;
+                    g.appendChild(slackText);
+                    setTimeout(() => slackText.classList.add("visible"), 50 + animationDelay + 450);
+                }
+                animationDelay += graphConfig.animationDelayIncrement;
+            });
+        }
+
+        function drawGANTT(svgId) {
+            const svg = document.getElementById(svgId);
+            if (!svg) { console.error("SVG element not found for GANTT:", svgId); return; }
+            svg.innerHTML = ''; 
+            
+            const svgWidth = svg.clientWidth;
+            const svgHeight = svg.clientHeight;
+
+            if (svgWidth <= 0 || svgHeight <= 0 || partyTasks.length === 0) return;
+
+            const ganttStartXForLabels = Math.min(280, Math.max(120, svgWidth * 0.22)); 
+            const margin = {
+                top: Math.max(60, svgHeight * 0.1),    
+                right: Math.max(30, svgWidth * 0.05),  
+                bottom: Math.max(70, svgHeight * 0.12),
+                left: ganttStartXForLabels
+            };
+            
+            const chartWidth = svgWidth - margin.left - margin.right;
+            const chartHeight = svgHeight - margin.top - margin.bottom;
+
+            if (chartWidth <= 0 || chartHeight <= 0) return;
+
+            let dynamicGanttSpacing;
+            const numTasks = partyTasks.length;
+            const barHeight = graphConfig.ganttBarHeight;
+
+            if (numTasks === 0) {
+                dynamicGanttSpacing = barHeight + 5; 
+            } else {
+                const minTotalHeightWithMinGaps = numTasks * barHeight + Math.max(0, numTasks - 1) * 2; 
+
+                if (chartHeight < minTotalHeightWithMinGaps) {
+                    dynamicGanttSpacing = Math.max(chartHeight / numTasks, barHeight); 
+                } else {
+                    const preferredTopToTopSpacing = graphConfig.ganttSpacing;
+                    const idealEvenTopToTopSpacing = chartHeight / numTasks; 
+
+                    if (idealEvenTopToTopSpacing > preferredTopToTopSpacing * 1.2) { 
+                        dynamicGanttSpacing = Math.min(idealEvenTopToTopSpacing, preferredTopToTopSpacing * 1.5);
+                    } else {
+                        dynamicGanttSpacing = preferredTopToTopSpacing; 
+                    }
+                    dynamicGanttSpacing = Math.max(dynamicGanttSpacing, barHeight + (numTasks > 1 ? 2 : 0));
+                }
+            }
+            if (numTasks > 0 && dynamicGanttSpacing * numTasks > chartHeight && chartHeight / numTasks >= barHeight) {
+                dynamicGanttSpacing = chartHeight / numTasks;
+            }
+
+            const timeScale = partyProjectDuration > 0 ? chartWidth / partyProjectDuration : chartWidth; 
+            let animationDelay = 0;
+
+            const xAxisGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            xAxisGroup.setAttribute("transform", `translate(${margin.left}, ${margin.top + chartHeight})`);
+            svg.appendChild(xAxisGroup);
+
+            const xAxisLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            xAxisLine.setAttribute("x1", 0); xAxisLine.setAttribute("y1", 0);
+            xAxisLine.setAttribute("x2", chartWidth); xAxisLine.setAttribute("y2", 0);
+            xAxisLine.setAttribute("class", "gantt-axis-line");
+            xAxisGroup.appendChild(xAxisLine);
+
+            if (partyProjectDuration > 0) {
+                let tickStep = 1;
+                if (partyProjectDuration > 1) { 
+                     const maxTicks = Math.min(12, Math.max(3, Math.floor(chartWidth / 60))); 
+                     tickStep = Math.ceil(partyProjectDuration / maxTicks);
+                     tickStep = Math.max(1, tickStep); 
+                }
+
+                for (let day = 0; day <= partyProjectDuration; day++) {
+                    const x = day * timeScale;
+                    if (day % tickStep === 0 || day === 0 || day === partyProjectDuration) {
+                        const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        tick.setAttribute("x1", x); tick.setAttribute("y1", 0);
+                        tick.setAttribute("x2", x); tick.setAttribute("y2", 5); 
+                        tick.setAttribute("class", "gantt-tick");
+                        xAxisGroup.appendChild(tick);
+
+                        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        label.setAttribute("x", x);
+                        label.setAttribute("y", 18); 
+                        label.setAttribute("class", "gantt-axis-text");
+                        label.textContent = day;
+                        xAxisGroup.appendChild(label);
+                    }
+                }
+            }
+
+            const yAxisGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            yAxisGroup.setAttribute("transform", `translate(${margin.left}, ${margin.top})`);
+            svg.appendChild(yAxisGroup);
+
+            partyTasks.forEach((task, index) => {
+                const y = index * dynamicGanttSpacing; 
+                const isCritical = birthdayPartyProject.criticalPathIds.includes(task.id);
+                
+                const bar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                bar.setAttribute("x", task.ES * timeScale);
+                bar.setAttribute("y", y);
+                bar.setAttribute("width", 0); 
+                bar.setAttribute("height", barHeight);
+                bar.setAttribute("class", `gantt-bar ${isCritical ? 'gantt-bar-red critical-gantt-bar' : 'gantt-bar-blue'}`);
+                bar.style.transitionDelay = `${animationDelay}ms`;
+                yAxisGroup.appendChild(bar);
+                setTimeout(() => bar.setAttribute("width", Math.max(0, task.duration * timeScale)), 50 + animationDelay); 
+
+                const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                label.setAttribute("x", -10); 
+                label.setAttribute("y", y + barHeight / 2);
+                label.setAttribute("class", "gantt-label");
+                label.setAttribute("dominant-baseline", "middle");
+                label.textContent = `${task.id}: ${task.name}`;
+                label.style.transitionDelay = `${animationDelay + 100}ms`;
+                yAxisGroup.appendChild(label);
+                setTimeout(() => label.classList.add("visible"), 50 + animationDelay + 100);
+                
+                if (task.duration > 0 && task.duration * timeScale > 25) { 
+                    const durationLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    durationLabel.setAttribute("x", (task.ES + task.duration / 2) * timeScale);
+                    durationLabel.setAttribute("y", y + barHeight / 2);
+                    durationLabel.setAttribute("class", "gantt-duration-label");
+                    durationLabel.textContent = `${task.duration}d`;
+                    durationLabel.style.transitionDelay = `${animationDelay + 800 }ms`; 
+                    yAxisGroup.appendChild(durationLabel);
+                    setTimeout(() => durationLabel.classList.add("visible"), 50 + animationDelay + 800);
+                }
+                
+                if (task.slack > 0 && !isCritical) {
+                    const slackBar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    slackBar.setAttribute("x", task.EF * timeScale);
+                    slackBar.setAttribute("y", y + barHeight / 4); 
+                    slackBar.setAttribute("width", 0); 
+                    slackBar.setAttribute("height", barHeight / 2);
+                    slackBar.setAttribute("class", "gantt-slack-bar");
+                    slackBar.style.transitionDelay = `${animationDelay + 500}ms`; 
+                    yAxisGroup.appendChild(slackBar);
+                    setTimeout(() => {
+                        slackBar.classList.add("visible");
+                        slackBar.setAttribute("width", Math.max(0, task.slack * timeScale)); 
+                    }, 50 + animationDelay + 500);
+                    
+                    if (task.slack * timeScale > 20) { 
+                        const slackLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        slackLabel.setAttribute("x", (task.EF + task.slack / 2) * timeScale);
+                        slackLabel.setAttribute("y", y + barHeight / 2);
+                        slackLabel.setAttribute("class", "gantt-slack-label");
+                        slackLabel.textContent = `+${task.slack}d`;
+                        slackLabel.style.fill = "#d0d0d0";
+                        slackLabel.style.transitionDelay = `${animationDelay + 1000}ms`;
+                        yAxisGroup.appendChild(slackLabel);
+                        setTimeout(() => slackLabel.classList.add("visible"), 50 + animationDelay + 1000);
+                    }
+                }
+                animationDelay += graphConfig.animationDelayIncrement / 1.5; 
+            });
+            
+            const chartTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            chartTitle.setAttribute("x", svgWidth / 2); 
+            chartTitle.setAttribute("y", margin.top / 2); 
+            chartTitle.setAttribute("class", "gantt-title-text");
+            chartTitle.setAttribute("dominant-baseline", "middle");
+            chartTitle.textContent = "Birthday Party Schedule";
+            svg.appendChild(chartTitle);
+            
+            const xAxisTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            xAxisTitle.setAttribute("x", margin.left + chartWidth / 2); 
+            xAxisTitle.setAttribute("y", svgHeight - margin.bottom / 2.5); 
+            xAxisTitle.setAttribute("class", "gantt-axis-text");
+            xAxisTitle.setAttribute("dominant-baseline", "middle");
+            xAxisTitle.style.fontWeight = "600"; 
+            xAxisTitle.textContent = "Project Days";
+            svg.appendChild(xAxisTitle);
+        }
+        
+        const progressIndicator = document.getElementById('progress-indicator');
+        const bpSteps = ['bp-step1', 'bp-step2', 'bp-step3', 'bp-step4', 'bp-step5', 'bp-step6', 'bp-step7', 'bp-step8'];
+        let currentBpStepIndex = 0;
+        let titleAnimationTimeout; 
+
+        function createProgressDots() {
+            if (!progressIndicator) return;
+            progressIndicator.innerHTML = ''; 
+            bpSteps.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.classList.add('progress-dot');
+                if (index === currentBpStepIndex) {
+                    dot.classList.add('active');
+                }
+                progressIndicator.appendChild(dot);
+            });
+        }
+
+        function updateProgressDots() {
+            if (!progressIndicator) return;
+            const dots = progressIndicator.querySelectorAll('.progress-dot');
+            dots.forEach((dot, index) => {
+                if (index === currentBpStepIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function animateTitle(titleElement) {
+            if (!titleElement) return;
+            clearTimeout(titleAnimationTimeout); 
+            titleElement.classList.remove('is-animating');
+            const textToAnimate = titleElement.dataset.text || titleElement.textContent || '';
+            titleElement.textContent = textToAnimate; 
+            
+            void titleElement.offsetWidth; 
+            
+            titleElement.style.width = '0'; 
+            titleElement.style.whiteSpace = 'nowrap'; 
+            titleElement.style.borderRight = '.15em solid #3498db';
+
+            titleElement.classList.add('is-animating');
+
+            const typingDuration = 2000; 
+             titleAnimationTimeout = setTimeout(() => {
+                titleElement.classList.remove('is-animating');
+                titleElement.style.width = '100%'; 
+                titleElement.style.whiteSpace = 'normal';
+                titleElement.style.borderRight = 'none';
+            }, typingDuration + 500); 
+        }
+
+        function showBpStep(indexToShow) {
+            bpSteps.forEach((stepId, i) => {
+                const stepElement = document.getElementById(stepId);
+                if (!stepElement) return;
+                const titleElement = stepElement.querySelector('.bp-step-title');
+
+                if (i === indexToShow) {
+                    stepElement.classList.remove('exiting');
+                    stepElement.style.animation = ''; 
+                    void stepElement.offsetWidth; 
+                    
+                    stepElement.style.display = 'flex'; 
+                    stepElement.style.opacity = '0'; 
+                    stepElement.style.animation = 'fadeInStep 0.8s ease-out forwards';
+                    animateTitle(titleElement);
+                } else {
+                    if (stepElement.style.display !== 'none' && !stepElement.classList.contains('exiting')) {
+                         stepElement.style.display = 'none';
+                    }
+                    if (titleElement) {
+                        titleElement.classList.remove('is-animating');
+                        titleElement.textContent = titleElement.dataset.text || '';
+                        titleElement.style.width = '100%';
+                        titleElement.style.whiteSpace = 'normal';
+                        titleElement.style.borderRight = 'none';
+                    }
+                }
+            });
+            updateProgressDots();
+
+            setTimeout(() => {
+                const currentStepId = bpSteps[indexToShow];
+                switch(currentStepId) {
+                    case 'bp-step1': 
+                        const introSvg = document.getElementById('bp-intro-svg');
+                        if (!introSvg) return;
+                        introSvg.innerHTML = ''; 
+                        const introText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        introText.setAttribute("x", "50%");
+                        introText.setAttribute("y", "50%");
+                        introText.setAttribute("text-anchor", "middle");
+                        introText.setAttribute("dominant-baseline", "middle");
+                        introText.setAttribute("font-size", "clamp(20px, 4vh, 32px)");
+                        introText.setAttribute("fill", "#f1c40f");
+                        introText.setAttribute("font-weight", "bold");
+                        introText.style.opacity = "0";
+                        introText.style.transform = "translateY(20px)";
+                        introText.style.transition = "opacity 0.8s ease-out 0.5s, transform 0.8s ease-out 0.5s";
+                        introText.textContent = "🎂 Party Planning Time! 🥳";
+                        introSvg.appendChild(introText);
+                        setTimeout(() => { 
+                            introText.style.opacity = "1";
+                            introText.style.transform = "translateY(0)";
+                        }, 100);
+                        break;
+                    case 'bp-step2': drawPERT('bp-tasks-svg'); break;
+                    case 'bp-step3': drawPERT('bp-dependencies-svg', { showDependencies: true }); break;
+                    case 'bp-step4': drawPERT('bp-duration-svg', { showDependencies: true, showDurations: true }); break;
+                    case 'bp-step5': drawPERT('bp-pert-times-svg', { showDependencies: true, showDurations: true, showTimes: true }); break;
+                    case 'bp-step6': drawPERT('bp-critical-svg', { showDependencies: true, showDurations: true, showTimes: true, showCritical: true }); break;
+                    case 'bp-step7': drawPERT('bp-slack-svg', { showDependencies: true, showDurations: true, showTimes: true, showCritical: true, showSlack: true }); break;
+                    case 'bp-step8': drawGANTT('bp-gantt-svg'); break;
+                }
+            }, 50); 
+        }
+        
+        function navigateNext() {
+            const oldStepElement = document.getElementById(bpSteps[currentBpStepIndex]);
+            if (oldStepElement) { 
+                oldStepElement.classList.add('exiting');
+                setTimeout(() => {
+                    oldStepElement.style.display = 'none'; 
+                    oldStepElement.classList.remove('exiting'); 
+                    oldStepElement.style.animation = ''; 
+                }, 500); 
+            }
+            
+            currentBpStepIndex++;
+            if (currentBpStepIndex >= bpSteps.length) {
+                currentBpStepIndex = 0; 
+            }
+            
+            setTimeout(() => {
+                 showBpStep(currentBpStepIndex);
+            }, oldStepElement ? 150 : 0); 
+        }
+
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.bp-step-title').forEach(titleEl => {
+                if (titleEl.dataset.text) {
+                    titleEl.textContent = titleEl.dataset.text;
+                }
+            });
+            createProgressDots();
+            showBpStep(currentBpStepIndex); 
+            
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    showBpStep(currentBpStepIndex); 
+                }, 250);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowRight' || event.keyCode === 39) {
+                    event.preventDefault(); 
+                    navigateNext();
+                }
+            });
+
+            // --- AGREGAR EVENT LISTENER AL NUEVO BOTÓN ---
+            const nextButton = document.getElementById('next-step-button');
+            if (nextButton) {
+                nextButton.addEventListener('click', navigateNext);
+            }
+            // --- FIN DE AGREGAR EVENT LISTENER ---
+        });
+    </script>
+</body>
+</html>
